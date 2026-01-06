@@ -2011,8 +2011,12 @@ function loadGlobalsFromSnapshot(pg){
   const p = scenes[pg];
   if (!p) return;
   // A1: Only restore trackLen (pattern data is unified, just refresh UI)
+  // I05 FIX: Skip PHRASES_IDX - phrase track rail length is constant across all pages
   // trackLen is a const array; copy into it
-  for (let i=0;i<trackLen.length && i<p.trackLen.length;i++){ trackLen[i] = p.trackLen[i]; }
+  for (let i=0;i<trackLen.length && i<p.trackLen.length;i++){
+    if (i === PHRASES_IDX) continue; // I05: Phrase track constant across pages
+    trackLen[i] = p.trackLen[i];
+  }
   refreshGridFromArrays();
   if (typeof applyAllTrackLenUI==='function') applyAllTrackLenUI();
   try{ window.dispatchEvent(new Event('resize')); }catch(_){}
@@ -2024,7 +2028,11 @@ function saveGlobalsIntoScene(pg){ scenes[pg] = snapshotFromGlobals(); }
 function getPageData(pg){
   // A1: Pattern data is unified across all pages, only trackLen differs per page
   const s = scenes[pg];
-  const pageTrackLen = (s && s.trackLen) ? s.trackLen : trackLen;
+  // I05 FIX: Phrase track rail length is constant - always use current value
+  const pageTrackLen = (s && s.trackLen) ? s.trackLen.slice(0) : trackLen.slice(0);
+  if (typeof PHRASES_IDX !== 'undefined') {
+    pageTrackLen[PHRASES_IDX] = trackLen[PHRASES_IDX]; // Always use current phrase rail length
+  }
   return { pattern, probability, morphTarget, morphAmt, timingOffsetMs, trackLen: pageTrackLen };
 }
 function updatePlayingIndicator(pg){
